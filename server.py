@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import mimetypes
+import threading
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -16,7 +17,8 @@ from core import HyperionEngine
 ROOT = Path(__file__).resolve().parent
 PUBLIC = ROOT / "public"
 ENGINE = HyperionEngine()
-MAX_BODY = 16_384
+ENGINE_LOCK = threading.RLock()
+MAX_BODY = 524_288
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -27,26 +29,38 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/status":
             self._json({
                 "online": True, "name": "HYPERION", "version": ENGINE.VERSION,
-                "mode": "100% LOCAL", "documents": len(ENGINE.documents),
-                "network": "disabled", "engine": "neuro-symbolic",
+                "mode": "100% LOCAL · XL", "documents": len(ENGINE.documents),
+                "learned": ENGINE.learned_count, "network": "disabled", "engine": "neuro-symbolic-xl",
             })
             return
         self._static(path)
 
     def do_POST(self) -> None:
-        if urlparse(self.path).path != "/api/chat":
+        path = urlparse(self.path).path
+        if path not in {"/api/chat", "/api/learn", "/api/reset"}:
             self._json({"error": "Ruta no encontrada."}, HTTPStatus.NOT_FOUND)
             return
         try:
             length = int(self.headers.get("Content-Length", "0"))
-            if length <= 0 or length > MAX_BODY:
+            if length < 0 or length > MAX_BODY or (length == 0 and path != "/api/reset"):
                 raise ValueError("Tamaño de solicitud no válido.")
-            payload = json.loads(self.rfile.read(length))
-            message = payload.get("message")
-            style = payload.get("style", "balanced")
-            if not isinstance(message, str) or style not in {"concise", "balanced", "technical"}:
-                raise ValueError("Parámetros no válidos.")
-            self._json(ENGINE.respond(message, style))
+            payload = json.loads(self.rfile.read(length)) if length else {}
+            with ENGINE_LOCK:
+                if path == "/api/chat":
+                    message = payload.get("message")
+                    style = payload.get("style", "balanced")
+                    if not isinstance(message, str) or style not in {"concise", "balanced", "technical"}:
+                        raise ValueError("Parámetros no válidos.")
+                    self._json(ENGINE.respond(message, style))
+                elif path == "/api/learn":
+                    title, content = payload.get("title"), payload.get("content")
+                    if not isinstance(title, str) or not isinstance(content, str):
+                        raise ValueError("Documento no válido.")
+                    chunks = ENGINE.learn(title, content)
+                    self._json({"learned": True, "chunks": chunks, "documents": len(ENGINE.documents)})
+                else:
+                    ENGINE.reset_learned()
+                    self._json({"reset": True, "documents": len(ENGINE.documents)})
         except (ValueError, json.JSONDecodeError) as exc:
             self._json({"error": str(exc)}, HTTPStatus.BAD_REQUEST)
         except Exception:

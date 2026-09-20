@@ -30,6 +30,14 @@ class EngineTests(unittest.TestCase):
         self.assertIn("Transformer", result["answer"])
         self.assertGreater(result["confidence"], 0)
 
+    def test_volatile_learning(self):
+        chunks = self.engine.learn("Proyecto Boreal", "El código secreto del Proyecto Boreal es AZUL-739. " * 30)
+        self.assertGreaterEqual(chunks, 1)
+        result = self.engine.respond("¿Cuál es el código secreto del Proyecto Boreal?")
+        self.assertIn("AZUL-739", result["answer"])
+        self.engine.reset_learned()
+        self.assertEqual(self.engine.learned_count, 0)
+
 
 if __name__ == "__main__":
     unittest.main()

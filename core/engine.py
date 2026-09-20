@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from .knowledge import KNOWLEDGE
+from .knowledge_extended import EXTENDED_KNOWLEDGE
 
 
 TOKEN_RE = re.compile(r"[a-záéíóúüñ0-9+#.-]+", re.IGNORECASE)
@@ -121,14 +122,47 @@ class IndexedDocument:
 class HyperionEngine:
     """Hybrid symbolic/retrieval engine with no third-party runtime dependency."""
 
-    VERSION = "1.0.0"
+    VERSION = "2.0.0"
 
     def __init__(self) -> None:
-        self.documents = [self._index(item) for item in KNOWLEDGE]
+        self.base_count = len(KNOWLEDGE) + len(EXTENDED_KNOWLEDGE)
+        self.documents = [self._index(item) for item in KNOWLEDGE + EXTENDED_KNOWLEDGE]
+        self._rebuild_statistics()
+
+    def _rebuild_statistics(self) -> None:
         self.document_frequency = Counter(
             token for document in self.documents for token in set(document.tokens)
         )
-        self.average_length = sum(len(d.tokens) for d in self.documents) / len(self.documents)
+        self.average_length = sum(len(d.tokens) for d in self.documents) / max(1, len(self.documents))
+
+    def learn(self, title: str, content: str) -> int:
+        """Index user-provided text in volatile memory and return the chunk count."""
+        title, content = title.strip(), content.strip()
+        if not title or not content:
+            raise ValueError("Título y contenido son obligatorios.")
+        if len(title) > 120 or len(content) > 500_000:
+            raise ValueError("El documento supera el límite local permitido.")
+        words = content.split()
+        chunks = [" ".join(words[index:index + 220]) for index in range(0, len(words), 180)]
+        if not chunks:
+            raise ValueError("El documento no contiene texto indexable.")
+        for index, chunk in enumerate(chunks):
+            item = {
+                "title": title if len(chunks) == 1 else f"{title} · {index + 1}/{len(chunks)}",
+                "tags": tokenize(title)[:8] + ["memoria", "usuario"],
+                "text": chunk,
+            }
+            self.documents.append(self._index(item))
+        self._rebuild_statistics()
+        return len(chunks)
+
+    def reset_learned(self) -> None:
+        self.documents = self.documents[:self.base_count]
+        self._rebuild_statistics()
+
+    @property
+    def learned_count(self) -> int:
+        return max(0, len(self.documents) - self.base_count)
 
     @staticmethod
     def _index(item: dict[str, Any]) -> IndexedDocument:

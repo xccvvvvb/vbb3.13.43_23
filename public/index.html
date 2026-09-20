@@ -16,6 +16,7 @@
         <div><strong>HYPERION</strong><small>LOCAL INTELLIGENCE</small></div>
       </div>
       <button class="new-chat" id="new-chat"><span>＋</span> Nueva sesión <kbd>⌘ K</kbd></button>
+      <button class="knowledge-button" id="knowledge-button"><span>⬡</span><div>AMPLIAR CONOCIMIENTO<small id="knowledge-count">36 NÚCLEOS · 0 APRENDIDOS</small></div></button>
       <div class="nav-label">SESIONES LOCALES</div>
       <nav id="sessions"></nav>
       <div class="sidebar-bottom">
@@ -31,15 +32,15 @@
     <main>
       <header>
         <button class="menu" id="menu" aria-label="Abrir menú">☰</button>
-        <div class="model-pill"><span class="pulse"></span> HYPERION CORE <b>v1.0</b></div>
+        <div class="model-pill"><span class="pulse"></span> HYPERION CORE XL <b>v2.0</b></div>
         <div class="header-status"><span>●</span> NÚCLEO EN LÍNEA</div>
       </header>
 
       <section class="conversation" id="conversation">
         <div class="hero" id="hero">
           <div class="orb-wrap"><div class="orbit orbit-a"></div><div class="orbit orbit-b"></div><div class="orb"><i></i></div></div>
-          <p class="eyebrow">SISTEMA NEURO-SIMBÓLICO / AIR-GAPPED</p>
-          <h1>Inteligencia que vive<br><em>solo en tu máquina.</em></h1>
+          <p class="eyebrow">SISTEMA NEURO-SIMBÓLICO XL / MEMORIA EXPANDIBLE</p>
+          <h1>Una inteligencia que<br><em>crece contigo.</em></h1>
           <p class="hero-copy">Razonamiento local, matemáticas seguras y conocimiento verificable.<br>Sin nube. Sin rastreo. Sin APIs de terceros.</p>
           <div class="suggestions">
             <button data-prompt="¿Cómo funciona tu arquitectura local?"><span>⌘</span><div><strong>Explora el núcleo</strong><small>¿Cómo funciona tu arquitectura local?</small></div><b>→</b></button>
@@ -62,6 +63,17 @@
       </section>
     </main>
   </div>
+
+  <dialog id="knowledge-dialog">
+    <form id="knowledge-form">
+      <div class="dialog-head"><div><small>MEMORIA EXPANDIBLE XL</small><h2>Enseñar al núcleo</h2></div><button type="button" data-close>×</button></div>
+      <p class="dialog-copy">Añade apuntes, manuales o conocimiento propio. El texto se fragmenta, vectoriza e indexa únicamente en la RAM de este proceso.</p>
+      <label>Título<input id="document-title" maxlength="120" placeholder="Ej. Manual interno del proyecto" required></label>
+      <label>Contenido<textarea id="document-content" maxlength="500000" rows="9" placeholder="Pega aquí hasta 500.000 caracteres…" required></textarea></label>
+      <div class="learn-actions"><button type="button" class="reset-memory" id="reset-memory">Limpiar memoria aprendida</button><button class="done" type="submit">Indexar localmente</button></div>
+      <p class="learn-status" id="learn-status"></p>
+    </form>
+  </dialog>
 
   <dialog id="settings">
     <form method="dialog">

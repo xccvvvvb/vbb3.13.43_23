@@ -93,10 +93,38 @@ $('#prompt').addEventListener('keydown', event => { if (event.key === 'Enter' &&
 $('#new-chat').addEventListener('click', newSession);
 $('#sessions').addEventListener('click', event => { const button = event.target.closest('[data-id]'); if (button) { state.active = button.dataset.id; render(); } });
 document.querySelectorAll('[data-prompt]').forEach(button => button.addEventListener('click', () => send(button.dataset.prompt)));
+$('#knowledge-button').addEventListener('click', () => $('#knowledge-dialog').showModal());
+$('[data-close]').addEventListener('click', () => $('#knowledge-dialog').close());
+$('#knowledge-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  const status = $('#learn-status');
+  status.textContent = 'VECTORZANDO E INDEXANDO EN MEMORIA…';
+  try {
+    const response = await fetch('/api/learn', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({title:$('#document-title').value, content:$('#document-content').value})});
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error);
+    status.textContent = `✓ ${data.chunks} FRAGMENTOS INTEGRADOS · ${data.documents} NÚCLEOS ACTIVOS`;
+    $('#document-content').value = '';
+    await refreshStatus();
+  } catch (error) { status.textContent = `ERROR: ${error.message}`; }
+});
+$('#reset-memory').addEventListener('click', async () => {
+  await fetch('/api/reset', {method:'POST'});
+  $('#learn-status').textContent = 'MEMORIA APRENDIDA ELIMINADA';
+  refreshStatus();
+});
 $('#settings-button').addEventListener('click', () => { $('#style').value = state.style; $('#settings').showModal(); });
 $('#settings').addEventListener('close', () => { state.style = $('#style').value; localStorage.setItem('hyperion.style', state.style); });
 $('#menu').addEventListener('click', () => $('#sidebar').classList.toggle('open'));
 document.addEventListener('keydown', event => { if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); newSession(); } });
 
+async function refreshStatus() {
+  try {
+    const response = await fetch('/api/status');
+    const data = await response.json();
+    $('#knowledge-count').textContent = `${data.documents} NÚCLEOS · ${data.learned} APRENDIDOS`;
+  } catch (_) { $('.header-status').innerHTML = '<span>●</span> NÚCLEO SIN RESPUESTA'; }
+}
+
 if (!state.sessions.length) newSession(); else { state.active = state.sessions[0].id; render(); }
-fetch('/api/status').catch(() => { $('.header-status').innerHTML = '<span>●</span> NÚCLEO SIN RESPUESTA'; });
+refreshStatus();
