@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#070908">
+  <title>Hyperion — Inteligencia local</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="noise"></div>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-mark"><span>H</span></div>
+        <div><strong>HYPERION</strong><small>LOCAL INTELLIGENCE</small></div>
+      </div>
+      <button class="new-chat" id="new-chat"><span>＋</span> Nueva sesión <kbd>⌘ K</kbd></button>
+      <button class="knowledge-button" id="knowledge-button"><span>⬡</span><div>AMPLIAR CONOCIMIENTO<small id="knowledge-count">36 NÚCLEOS · 0 APRENDIDOS</small></div></button>
+      <div class="nav-label">SESIONES LOCALES</div>
+      <nav id="sessions"></nav>
+      <div class="sidebar-bottom">
+        <div class="privacy-card">
+          <div class="privacy-icon">⌾</div>
+          <div><strong>Entorno aislado</strong><small>Cero datos transmitidos</small></div>
+          <span class="live-dot"></span>
+        </div>
+        <button class="settings-row" id="settings-button"><span>⚙</span> Configuración <span>›</span></button>
+      </div>
+    </aside>
+
+    <main>
+      <header>
+        <button class="menu" id="menu" aria-label="Abrir menú">☰</button>
+        <div class="model-pill"><span class="pulse"></span> HYPERION CORE XL <b>v2.0</b></div>
+        <div class="header-status"><span>●</span> NÚCLEO EN LÍNEA</div>
+      </header>
+
+      <section class="conversation" id="conversation">
+        <div class="hero" id="hero">
+          <div class="orb-wrap"><div class="orbit orbit-a"></div><div class="orbit orbit-b"></div><div class="orb"><i></i></div></div>
+          <p class="eyebrow">SISTEMA NEURO-SIMBÓLICO XL / MEMORIA EXPANDIBLE</p>
+          <h1>Una inteligencia que<br><em>crece contigo.</em></h1>
+          <p class="hero-copy">Razonamiento local, matemáticas seguras y conocimiento verificable.<br>Sin nube. Sin rastreo. Sin APIs de terceros.</p>
+          <div class="suggestions">
+            <button data-prompt="¿Cómo funciona tu arquitectura local?"><span>⌘</span><div><strong>Explora el núcleo</strong><small>¿Cómo funciona tu arquitectura local?</small></div><b>→</b></button>
+            <button data-prompt="Calcula sqrt(144) + 2^8"><span>∑</span><div><strong>Motor matemático</strong><small>Calcula sqrt(144) + 2^8</small></div><b>→</b></button>
+            <button data-prompt="Explica la atención de un Transformer"><span>◇</span><div><strong>Consulta técnica</strong><small>Explica la atención de un Transformer</small></div><b>→</b></button>
+          </div>
+        </div>
+        <div class="messages" id="messages" aria-live="polite"></div>
+      </section>
+
+      <section class="composer-area">
+        <form class="composer" id="chat-form">
+          <textarea id="prompt" rows="1" maxlength="4000" placeholder="Escribe una instrucción para el núcleo local…" aria-label="Mensaje"></textarea>
+          <div class="composer-footer">
+            <div class="tools"><button type="button" title="Todo el procesamiento es local">⊙</button><span>PROCESAMIENTO LOCAL</span></div>
+            <div class="send-group"><span id="counter">0 / 4000</span><button class="send" id="send" type="submit" aria-label="Enviar">↑</button></div>
+          </div>
+        </form>
+        <p class="footnote"><span>◆</span> AIR-GAPPED BY DESIGN · TUS DATOS NUNCA ABANDONAN ESTE DISPOSITIVO</p>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="knowledge-dialog">
+    <form id="knowledge-form">
+      <div class="dialog-head"><div><small>MEMORIA EXPANDIBLE XL</small><h2>Enseñar al núcleo</h2></div><button type="button" data-close>×</button></div>
+      <p class="dialog-copy">Añade apuntes, manuales o conocimiento propio. El texto se fragmenta, vectoriza e indexa únicamente en la RAM de este proceso.</p>
+      <label>Título<input id="document-title" maxlength="120" placeholder="Ej. Manual interno del proyecto" required></label>
+      <label>Contenido<textarea id="document-content" maxlength="500000" rows="9" placeholder="Pega aquí hasta 500.000 caracteres…" required></textarea></label>
+      <div class="learn-actions"><button type="button" class="reset-memory" id="reset-memory">Limpiar memoria aprendida</button><button class="done" type="submit">Indexar localmente</button></div>
+      <p class="learn-status" id="learn-status"></p>
+    </form>
+  </dialog>
+
+  <dialog id="settings">
+    <form method="dialog">
+      <div class="dialog-head"><div><small>CONFIGURACIÓN LOCAL</small><h2>Comportamiento</h2></div><button value="cancel">×</button></div>
+      <label>Profundidad de respuesta<select id="style"><option value="concise">Concisa</option><option value="balanced" selected>Equilibrada</option><option value="technical">Técnica</option></select></label>
+      <div class="config-info"><span>◉</span><p><strong>Privacidad máxima</strong><br>La preferencia se guarda solo en este navegador.</p></div>
+      <button class="done" value="default">Guardar configuración</button>
+    </form>
+  </dialog>
+  <script src="/app.js"></script>
+</body>
+</html>

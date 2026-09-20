@@ -1,0 +1,2 @@
+# Local tensor runtime only. No model, AI API, telemetry, or network client.
+torch>=2.2,<3
