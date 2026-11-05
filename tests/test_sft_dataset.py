@@ -44,12 +44,31 @@ class SoupDatasetTests(unittest.TestCase):
         self.assertIn("<|fin|>", decoded)
         self.assertNotIn(SYSTEM, decoded)
 
+    def test_labels_are_shifted_targets(self):
+        """El modelo no desplaza: labels[i] debe ser el token siguiente."""
+        tokens, labels = encode_dialogue(
+            {"instruction": "¿Qué es Soup?", "input": "", "output": "Una CLI."}, max_length=512
+        )
+        for index, label in enumerate(labels[:-1]):
+            if label != IGNORE_INDEX:
+                self.assertEqual(label, tokens[index + 1])
+        self.assertEqual(labels[0], IGNORE_INDEX)  # el prompt nunca se supervisa
+        self.assertNotEqual(labels[-1], IGNORE_INDEX)  # el último byte también se aprende
+
+    def test_first_answer_token_is_reachable(self):
+        """La posición previa a la respuesta debe estar supervisada."""
+        tokens, labels = encode_dialogue(
+            {"instruction": "Hola", "input": "", "output": "Hola."}, max_length=512
+        )
+        start = len(tokens) - len(ByteTokenizer().encode("Hola.<|fin|>")) + 1
+        self.assertNotEqual(labels[start - 1], IGNORE_INDEX)
+
     def test_max_length_truncates_both_sequences(self):
         tokens, labels = encode_dialogue(
             {"instruction": "x" * 5000, "input": "", "output": "y" * 5000}, max_length=128
         )
-        self.assertEqual(len(tokens), 128)
-        self.assertEqual(len(labels), 128)
+        self.assertEqual(len(tokens), 127)  # el input son tokens[i] -> token[i+1]
+        self.assertEqual(len(labels), 127)
 
 
 if __name__ == "__main__":

@@ -29,15 +29,30 @@ def build_prompt(question: str) -> str:
 
 
 def encode_dialogue(example: dict[str, str], max_length: int) -> tuple[list[int], list[int]]:
-    """Devuelve (tokens, etiquetas) con la pregunta enmascarada."""
+    """Devuelve (tokens, etiquetas) listos para `HyperionTransformer`.
+
+    El modelo NO desplaza los objetivos: compara `logits[i]` con `targets[i]`,
+    igual que `neural.train`, que pasa `values[:, :-1]` y `values[:, 1:]`. Por
+    eso aquí la etiqueta de la posición `i` es el token `i + 1`, y solo se
+    supervisa cuando ese token siguiente pertenece a la respuesta. La posición
+    anterior al primer token de respuesta sí queda supervisada: es la que
+    enseña al modelo a *empezar* a responder en vez de copiar el prompt.
+    """
     tokenizer = ByteTokenizer()
     question = (example.get("instruction") or "").strip()
     if (example.get("input") or "").strip():
         question += "\n" + example["input"].strip()
     prompt_ids = tokenizer.encode(build_prompt(question))
     answer_ids = tokenizer.encode((example.get("output") or "").strip() + TURN_END)
-    tokens = (prompt_ids + answer_ids)[:max_length]
-    labels = ([IGNORE_INDEX] * len(prompt_ids) + answer_ids)[:max_length]
+    sequence = (prompt_ids + answer_ids)[:max_length]
+    is_answer = [False] * len(prompt_ids) + [True] * len(answer_ids)
+    is_answer = is_answer[:len(sequence)]
+    tokens = sequence[:-1]
+    # tokens[i] predice sequence[i + 1]; se supervisa si ese token es respuesta.
+    labels = [
+        sequence[index + 1] if is_answer[index + 1] else IGNORE_INDEX
+        for index in range(len(tokens))
+    ]  # len(labels) == len(tokens), con targets ya desplazados
     return tokens, labels
 
 

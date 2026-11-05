@@ -13,6 +13,10 @@ Hyperion usando solo el hardware de este repositorio. La segunda es la receta
 para cuando quieras partir de un modelo de lenguaje ya preentrenado y ajustarlo
 en una laptop.
 
+> El *peso* real del resultado no está en 9.5M de parámetros: está en que el
+> pipeline completo (dataset → alineación → validación → checkpoint → chat) es
+> reproducible sin red, sin GPU y sin APIs de IA.
+
 ## 1. Dataset (la "personalidad" de Hyperion)
 
 `35` ejemplos alpaca elaborados a partir de la documentación del repositorio:
@@ -34,14 +38,44 @@ añade el formato de diálogo y **solo calcula la pérdida sobre los tokens de l
 respuesta** (el prompt va enmascarado con `-100`), que es lo que convierte un
 autocompletador en un asistente.
 
+Detalle que costó un entrenamiento entero: `HyperionTransformer` **no desplaza**
+los objetivos internamente (igual que `neural.train`, que le pasa
+`values[:, :-1]` y `values[:, 1:]`). Si le pasas la respuesta sin desplazar,
+el modelo aprende a copiar el último carácter — salió un modelo que respondía
+`>>>>>>>>`. `neural/sft_format.py` construye ahora las etiquetas ya desplazadas
+(`labels[i] = token[i + 1]`) y una prueba de regresión lo verifica.
+
+### Resultado medido (400 pasos, 2 núcleos, 13 min)
+
+| Métrica | Valor |
+|---|---|
+| Pérdida de entrenamiento final | 0.0045 |
+| Perplejidad de validación | 224 (sobreajuste claro con 32 ejemplos) |
+| Parámetros | 9.541.632 |
+
+Muestra real con el checkpoint incluido en `checkpoints/sft-hyperion.pt`:
+
+```
+TÚ:  ¿Quién eres?
+HYPERION: Soy Hyperion, un motor de inteligencia neuro-simbólico local. Combino
+recuperación BM25, embeddings dispersos deterministas, detección de intenciones
+y un intérprete matemático AST seguro. Todo s...
+```
+
+Memoriza respuestas completas del corpus, pero **no generaliza**: preguntar
+"¿Qué es Soup?" devuelve la respuesta de LoRA. Con 35 ejemplos y 9.5M de
+parámetros, eso es lo esperable. Sirve para demostrar el pipeline completo en
+CPU, no como asistente de uso diario. La ruta con `soup.yaml` y un modelo de
+360M parte de lenguaje ya aprendido y es la que conviene para uso real.
+
 ```bash
 pip install torch         # solo runtime de tensores
 
-# 600 pasos en CPU (≈ 20 min en 2 núcleos, preset tiny de 9.5M parámetros)
+# 400 pasos en CPU (≈ 13 min en 2 núcleos, preset tiny de 9.5M parámetros)
 python -m neural.sft \
   --dataset soup/data/train.jsonl \
   --preset tiny \
-  --steps 600 \
+  --steps 400 \
   --batch-size 2 \
   --gradient-accumulation 4 \
   --learning-rate 3e-4 \
