@@ -35,6 +35,18 @@ torchrun --standalone --nproc_per_node=8 -m neural.train --preset 7b --data data
 
 PyTorch funciona únicamente como runtime matemático/CUDA; no es una API de IA y no aporta pesos preentrenados. El entrenamiento y los datos son enteramente locales.
 
+## Entrenar con Soup en CPU y poca RAM
+
+El repositorio incluye un dataset alpaca (`soup/data/train.jsonl`), un script de
+alineación SFT para el Transformer propio (`neural/sft.py`) y una receta de
+Soup LoRA lista para hardware modesto (`soup.yaml`). Consulta [`SOUP.md`](SOUP.md).
+
+```bash
+python soup/build_dataset.py
+python -m neural.sft --steps 600 --output checkpoints/sft-hyperion.pt
+python -m neural.chat --checkpoint checkpoints/sft-hyperion.pt
+```
+
 ## Garantías y límites
 
 - Cero APIs de IA, modelos remotos, telemetría o llamadas salientes.

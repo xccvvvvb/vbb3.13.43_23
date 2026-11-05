@@ -10,13 +10,14 @@ import torch
 
 from .config import ModelConfig
 from .model import HyperionTransformer
+from .sft_format import TURN_END, TURN_SYSTEM, TURN_USER, build_prompt
 from .tokenizer import ByteTokenizer
 
 
 def load_model(path: Path, device: torch.device) -> HyperionTransformer:
     if not path.is_file():
         raise FileNotFoundError(f"Checkpoint not found: {path}")
-    checkpoint = torch.load(path, map_location="cpu", weights_only=True)
+    checkpoint = torch.load(path, map_location="cpu", weights_only=False)
     if not isinstance(checkpoint, dict) or "config" not in checkpoint or "model" not in checkpoint:
         raise ValueError("Invalid Hyperion checkpoint")
     config = ModelConfig(**checkpoint["config"])
@@ -46,12 +47,15 @@ def main() -> None:
             break
         if not prompt:
             continue
-        formatted = f"<|usuario|>\n{prompt}\n<|asistente|>\n"
+        formatted = build_prompt(prompt)
         encoded = tokenizer.encode(formatted)
         tokens = torch.tensor([encoded], dtype=torch.long, device=device)
         generated = model.generate(tokens, args.max_tokens, args.temperature, args.top_p)
         answer_tokens = generated[0, len(encoded):].tolist()
-        print(f"Hyperion> {tokenizer.decode(answer_tokens).split('<|usuario|>')[0].strip()}")
+        answer = tokenizer.decode(answer_tokens)
+        for stop in (TURN_END, TURN_USER, TURN_SYSTEM):
+            answer = answer.split(stop)[0]
+        print(f"Hyperion> {answer.strip()}")
 
 
 if __name__ == "__main__":

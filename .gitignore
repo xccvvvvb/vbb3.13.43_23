@@ -6,3 +6,5 @@ checkpoints/
 data/
 *.pt
 *.pth
+soup/output/
+.soup-venv/

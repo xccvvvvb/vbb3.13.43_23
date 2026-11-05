@@ -1,0 +1,32 @@
+# Soup: ajuste fino de Hyperion en CPU y con poca RAM
+# Uso: soup train --config soup.yaml  (requiere: pip install "soup-cli[train]")
+#
+# Este archivo ajusta un modelo pequeño ya preentrenado con el dataset que
+# genera `python soup/build_dataset.py`. Complementa a `neural/sft.py`, que
+# alinea desde cero el Transformer propio de Hyperion sin descargar pesos.
+
+base: HuggingFaceTB/SmolLM2-360M-Instruct
+task: sft
+
+data:
+  train: ./soup/data/train.jsonl
+  format: alpaca
+  val_split: 0.1
+  max_length: 512
+
+training:
+  epochs: 5
+  lr: 2e-4
+  batch_size: 1
+  gradient_accumulation_steps: 8
+  # En CPU Soup ignora 4bit y usa fp32 automáticamente; en GPU déjalo en 4bit.
+  quantization: 4bit
+  gradient_checkpointing: true
+  lora:
+    r: 8
+    alpha: 16
+    target_modules: auto
+  logging_steps: 5
+  save_steps: 100
+
+output: ./soup/output
